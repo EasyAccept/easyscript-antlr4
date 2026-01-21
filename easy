@@ -59,10 +59,11 @@ parse_arguments() {
     if [[ $help_requested -eq 1 ]]; then
         case $command_requested in
             generate)
-                echo "Usage: ./easy generate <language> [-o | --output <output_directory>]"
+                echo "Usage: ./easy generate <language> [-o | --output <output_directory>] [-p | --package <package_name>]"
                 echo
                 echo "Generate the grammar on specified language. Supported languages: csharp"
                 echo "Can specify output directory with -o or --output option."
+                echo "Can specify library package name with -p or --package option."
                 ;;
             tree)
                 echo "Usage: ./easy tree"
@@ -99,6 +100,7 @@ parse_arguments() {
             shift
 
             local output_directory=""
+            local package_name=""
 
             while [[ "$#" -gt 0 ]]; do
                 case $1 in
@@ -109,6 +111,15 @@ parse_arguments() {
                             exit 1
                         fi
                         output_directory=$2
+                        shift 2
+                        ;;
+                    -p|--package)
+                        if [[ "$#" -lt 2 ]]; then
+                            echo "Error: No package name provided after '$1'."
+                            echo "Use -h or --help for usage information."
+                            exit 1
+                        fi
+                        package_name=$2
                         shift 2
                         ;;
                     *)
@@ -124,7 +135,11 @@ parse_arguments() {
                 prepare_grammar
 
                 # Generate the grammar as C# files
-                antlr4 -Dlanguage=CSharp -o .tmp/grammar/csharp /work/EasyScript.g4
+                if [[ -n "$package_name" ]]; then
+                    antlr4 -Dlanguage=CSharp -package "$package_name" -o .tmp/grammar/csharp /work/EasyScript.g4
+                else
+                    antlr4 -Dlanguage=CSharp -o .tmp/grammar/csharp /work/EasyScript.g4
+                fi
 
                 # Move generated files to output directory if specified
                 if [[ -n "$output_directory" ]]; then
