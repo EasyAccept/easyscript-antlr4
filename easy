@@ -59,11 +59,12 @@ parse_arguments() {
     if [[ $help_requested -eq 1 ]]; then
         case $command_requested in
             generate)
-                echo "Usage: ./easy generate <language> [-o | --output <output_directory>] [-p | --package <package_name>]"
+                echo "Usage: ./easy generate <language> [-o | --output <output_directory>] [-p | --package <package_name>] [--visitor] [--listener]"
                 echo
                 echo "Generate the grammar on specified language. Supported languages: csharp"
                 echo "Can specify output directory with -o or --output option."
                 echo "Can specify library package name with -p or --package option."
+                echo "By default, does not generate visitor or listener. To generate them, add --visitor and/or --listener options."
                 ;;
             tree)
                 echo "Usage: ./easy tree"
@@ -100,7 +101,9 @@ parse_arguments() {
             shift
 
             local output_directory=""
-            local package_name=""
+            local package_instruction=""
+            local visitor_instruction="-no-visitor"
+            local listener_instruction="-no-listener"
 
             while [[ "$#" -gt 0 ]]; do
                 case $1 in
@@ -119,8 +122,16 @@ parse_arguments() {
                             echo "Use -h or --help for usage information."
                             exit 1
                         fi
-                        package_name=$2
+                        package_instruction="-package $2"
                         shift 2
+                        ;;
+                    --visitor)
+                        visitor_instruction="-visitor"
+                        shift
+                        ;;
+                    --listener)
+                        listener_instruction="-listener"
+                        shift
                         ;;
                     *)
                         echo "Error: Unknown option '$1' for 'generate' command."
@@ -135,11 +146,8 @@ parse_arguments() {
                 prepare_grammar
 
                 # Generate the grammar as C# files
-                if [[ -n "$package_name" ]]; then
-                    antlr4 -Dlanguage=CSharp -package "$package_name" -o .tmp/grammar/csharp /work/EasyScript.g4
-                else
-                    antlr4 -Dlanguage=CSharp -o .tmp/grammar/csharp /work/EasyScript.g4
-                fi
+                # shellcheck disable=SC2086
+                antlr4 -Dlanguage=CSharp $package_instruction $visitor_instruction $listener_instruction -o .tmp/grammar/csharp /work/EasyScript.g4
 
                 # Move generated files to output directory if specified
                 if [[ -n "$output_directory" ]]; then
