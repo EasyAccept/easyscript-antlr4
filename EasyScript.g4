@@ -42,6 +42,6 @@ NEWLINE: '\r'? '\n';
 
 SPACE: ' ' | '\t';
 
-COMMENT: '#' CHARACTER* NEWLINE -> channel(HIDDEN);
+COMMENT: '#' (WORD | SPACE)* (NEWLINE | EOF) -> channel(HIDDEN);
 
 fragment CHARACTER : [0-9a-zA-Z_];
