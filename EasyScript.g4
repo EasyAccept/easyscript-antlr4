@@ -4,37 +4,35 @@ grammar EasyScript;
  * Parser Rules
  */
 
-easy: ENDLINE* instruction? ENDLINE* EOF ;
+easy: ENDLINE* instruction? ENDLINE* EOF;
 
-instruction: SPACE* command (ENDLINE+ instruction)? ;
+instruction: SPACE* command (ENDLINE+ instruction)?;
 
-command: echo_
-       | quit_
-       | unknownCommand ;
+command: echo_ 
+       | quit_ 
+       | unknownCommand;
 
-echo_: ECHO_ argumentList? ;
-quit_: QUIT_ ;
+echo_: ECHO_ argumentList?;
+quit_: QUIT_;
 
 unknownCommand: WORD argumentList?;
 
-argumentList: SPACE+ argument argumentList? ;
+argumentList: SPACE+ argument argumentList?;
 
-argument: STRING
-        | WORD (ASSIGN (STRING | WORD))?;
+argument: WORD ('=' (WORD | STRING))?
+        | STRING;
 
 /**
  * Lexer Rules
  */
-
-ASSIGN: '=';
-
 // Known commands
 ECHO_: 'echo';
 QUIT_: 'quit';
 
-STRING: '"' (WORD | SPACE)* '"' | '\'' (WORD | SPACE)* '\'';
+WORD: ~[ \t\r\n]+;
 
-WORD: CHARACTER+;
+STRING: '"' ~["' \t\r\n]* '"'
+	     | '\'' ~["' \t\r\n]* '\'';
 
 ENDLINE: SPACE* NEWLINE;
 
@@ -42,6 +40,4 @@ NEWLINE: '\r'? '\n';
 
 SPACE: ' ' | '\t';
 
-COMMENT: '#' (WORD | SPACE)* (NEWLINE | EOF) -> channel(HIDDEN);
-
-fragment CHARACTER : [0-9a-zA-Z_];
+COMMENT: '#' ~[\r\n]* (NEWLINE | EOF) -> channel(HIDDEN);\
