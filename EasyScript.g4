@@ -10,10 +10,12 @@ instruction: command SPACE* (ENDLINE | EOF);
 
 command: echo_ 
        | quit_ 
+       | expect_
        | unknownCommand;
 
 echo_: ECHO_ SPACE+ STRING;
 quit_: QUIT_;
+expect_: EXPECT_ SPACE+ (WORD | STRING) SPACE+ unknownCommand;
 unknownCommand: WORD argumentList?;
 
 argumentList: argument (SPACE+ argumentList)?;
@@ -25,6 +27,7 @@ argument: WORD EQUAL (WORD | STRING);
 EQUAL: '=';
 ECHO_: 'echo';
 QUIT_: 'quit';
+EXPECT_: 'expect'; 
 
 WORD: ~["' \t\r\n]+;
 
