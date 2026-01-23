@@ -4,40 +4,35 @@ grammar EasyScript;
  * Parser Rules
  */
 
-easy: ENDLINE* instruction? ENDLINE* EOF;
+easy: (instruction | ENDLINE)* EOF?;
 
-instruction: SPACE* command (ENDLINE+ instruction)?;
+instruction: command SPACE* (ENDLINE | EOF);
 
 command: echo_ 
        | quit_ 
        | unknownCommand;
 
-echo_: ECHO_ argumentList?;
+echo_: ECHO_ SPACE+ (STRING | WORD);
 quit_: QUIT_;
+unknownCommand: WORD (SPACE+ argument)+;
 
-unknownCommand: WORD argumentList?;
-
-argumentList: SPACE+ argument argumentList?;
-
-argument: WORD ('=' (WORD | STRING))?
-        | STRING;
+argument: STRING
+	| WORD (EQUAL (WORD | STRING))?;
 
 /**
  * Lexer Rules
  */
-// Known commands
+EQUAL: '=';
 ECHO_: 'echo';
 QUIT_: 'quit';
 
-WORD: ~[ \t\r\n]+;
+WORD: ~["' \t\r\n]+;
 
-STRING: '"' ~["' \t\r\n]* '"'
-	     | '\'' ~["' \t\r\n]* '\'';
+STRING: '"' ~["']* '"'
+      | '\'' ~["']* '\'';
 
-ENDLINE: SPACE* NEWLINE;
-
-NEWLINE: '\r'? '\n';
+ENDLINE: SPACE* '\r'? '\n';
 
 SPACE: ' ' | '\t';
 
-COMMENT: '#' ~[\r\n]* (NEWLINE | EOF) -> channel(HIDDEN);
+COMMENT: '#' ~[\r\n]* (ENDLINE | EOF) -> skip;
