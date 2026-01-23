@@ -12,12 +12,12 @@ command: echo_
        | quit_ 
        | unknownCommand;
 
-echo_: ECHO_ SPACE+ (STRING | WORD);
+echo_: ECHO_ SPACE+ STRING;
 quit_: QUIT_;
-unknownCommand: WORD (SPACE+ argument)+;
+unknownCommand: WORD argumentList?;
 
-argument: STRING
-	| WORD (EQUAL (WORD | STRING))?;
+argumentList: argument (SPACE+ argumentList)?;
+argument: WORD EQUAL (WORD | STRING);
 
 /**
  * Lexer Rules
