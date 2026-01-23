@@ -40,4 +40,4 @@ NEWLINE: '\r'? '\n';
 
 SPACE: ' ' | '\t';
 
-COMMENT: '#' ~[\r\n]* (NEWLINE | EOF) -> channel(HIDDEN);\
+COMMENT: '#' ~[\r\n]* (NEWLINE | EOF) -> channel(HIDDEN);
