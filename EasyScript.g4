@@ -35,7 +35,7 @@ QUIT_: 'quit';
 EXPECT_: 'expect';
 EXPECT_ERROR_: 'expectError';
 
-WORD: ~["' \t\r\n]+;
+WORD: ~["' \t=\r\n]+;
 
 STRING: '"' ~["']* '"'
       | '\'' ~["']* '\'';
