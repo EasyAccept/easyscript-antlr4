@@ -15,15 +15,15 @@ command: echo_
        | unknownCommand
        | assignment;
 
-echo_: ECHO_ SPACE+ STRING;
+echo_: ECHO_ SPACE+ (WORD | VARIABLE | STRING);
 quit_: QUIT_;
-expect_: EXPECT_ SPACE+ (WORD | STRING) SPACE+ unknownCommand;
-expect_error_: EXPECT_ERROR_ SPACE+ (WORD | STRING) SPACE+ unknownCommand;
+expect_: EXPECT_ SPACE+ (WORD | VARIABLE | STRING) SPACE+ unknownCommand;
+expect_error_: EXPECT_ERROR_ SPACE+ (WORD | VARIABLE | STRING) SPACE+ unknownCommand;
 unknownCommand: WORD argumentList?;
 assignment: WORD EQUAL unknownCommand;
 
 argumentList: argument (SPACE+ argumentList)?;
-argument: WORD EQUAL (WORD | STRING);
+argument: WORD EQUAL (WORD | VARIABLE | STRING);
 
 /**
  * Lexer Rules
@@ -36,6 +36,8 @@ EXPECT_: 'expect';
 EXPECT_ERROR_: 'expectError';
 
 WORD: ~["' \t=\r\n]+;
+
+VARIABLE: '${' WORD '}';
 
 STRING: '"' ~["']* '"'
       | '\'' ~["']* '\'';
