@@ -18,9 +18,14 @@ prepare_grammar() {
     cp "$PROJECT_DIR/EasyScript.g4" "$PROJECT_DIR/.tmp/grammar/"
 }
 
+prepare_gui() {
+    xhost +local:docker
+}
+
 java() {
     # Run the 'javac' command
-    docker run --rm -it -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" --entrypoint="java" easyaccept "$@"
+    # shellcheck disable=SC2086
+    docker run --rm -it -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY --entrypoint="java" easyaccept "$@"
 }
 
 javac() {
@@ -71,12 +76,18 @@ parse_arguments() {
                 echo
                 echo "Parse the grammar and print the parse tree."
                 ;;
+            gui)
+                echo "Usage: ./easy gui"
+                echo
+                echo "Launch the ANTLR4 GUI tool."
+                ;;
             *)
                 echo "Usage: ./easy [-h | --help] <command> [<args>]"
                 echo
                 echo "Commands:"
                 echo "  generate   Generate the grammar on specified language"
                 echo "  tree       Parse the grammar and print the parse tree"
+                echo "  gui        Launch the ANTLR4 GUI tool"
                 ;;
         esac
 
@@ -180,6 +191,25 @@ parse_arguments() {
             echo "Write your input and press Ctrl+D to finish."
             antlr4_parse EasyScript easy -tree
 
+            exit 0
+            ;;
+        gui)
+            prepare_docker
+            prepare_grammar
+            prepare_gui
+
+            # Generate the grammar as Java files
+            antlr4 -Dlanguage=Java .tmp/grammar/EasyScript.g4
+
+            # Compile the grammar
+            JAVA_FILES=$(find "$PROJECT_DIR"/.tmp/grammar -name "*.java" -print0 | tr '\0' ' ')
+            JAVA_FILES=${JAVA_FILES//"$PROJECT_DIR"\//}
+            javac -cp /usr/local/lib/antlr4-tool.jar -d .tmp/grammar/target $JAVA_FILES
+
+            # Run the 'antlr4-parse' command
+            echo "Write your input and press Ctrl+D to finish."
+            antlr4_parse EasyScript easy -gui
+            
             exit 0
             ;;
         *)
