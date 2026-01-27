@@ -15,15 +15,17 @@ command: echo_
        | unknownCommand
        | assignment;
 
-echo_: ECHO_ SPACE+ (WORD | VARIABLE | STRING);
+echo_: ECHO_ SPACE+ data;
 quit_: QUIT_;
-expect_: EXPECT_ SPACE+ (WORD | VARIABLE | STRING) SPACE+ unknownCommand;
-expect_error_: EXPECT_ERROR_ SPACE+ (WORD | VARIABLE | STRING) SPACE+ unknownCommand;
+expect_: EXPECT_ SPACE+ data SPACE+ unknownCommand;
+expect_error_: EXPECT_ERROR_ SPACE+ data SPACE+ unknownCommand;
 unknownCommand: WORD (SPACE+ argumentList)?;
 assignment: WORD EQUAL unknownCommand;
 
 argumentList: argument (SPACE+ argumentList)?;
-argument: WORD EQUAL (WORD | VARIABLE | STRING);
+argument: WORD EQUAL data;
+
+data: WORD | VARIABLE | STRING;
 
 /**
  * Lexer Rules
