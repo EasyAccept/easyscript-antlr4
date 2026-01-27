@@ -6,7 +6,7 @@ grammar EasyScript;
 
 easy: (instruction | ENDLINE)* EOF?;
 
-instruction: command SPACE* (ENDLINE | EOF);
+instruction: command (ENDLINE | EOF);
 
 command: echo_ 
        | quit_ 
@@ -19,7 +19,7 @@ echo_: ECHO_ SPACE+ (WORD | VARIABLE | STRING);
 quit_: QUIT_;
 expect_: EXPECT_ SPACE+ (WORD | VARIABLE | STRING) SPACE+ unknownCommand;
 expect_error_: EXPECT_ERROR_ SPACE+ (WORD | VARIABLE | STRING) SPACE+ unknownCommand;
-unknownCommand: WORD argumentList?;
+unknownCommand: WORD (SPACE+ argumentList)?;
 assignment: WORD EQUAL unknownCommand;
 
 argumentList: argument (SPACE+ argumentList)?;
