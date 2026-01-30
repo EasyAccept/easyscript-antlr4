@@ -8,12 +8,13 @@ easy: (instruction | ENDLINE)* EOF?;
 
 instruction: command (ENDLINE | EOF);
 
-command: echo_ 
-       | quit_ 
-       | expect_
-       | expect_error_
-       | unknownCommand
-       | assignment;
+command:
+	echo_
+	| quit_
+	| expect_
+	| expect_error_
+	| unknownCommand
+	| assignment;
 
 echo_: ECHO_ SPACE+ data;
 quit_: QUIT_;
@@ -37,12 +38,11 @@ QUIT_: 'quit';
 EXPECT_: 'expect';
 EXPECT_ERROR_: 'expectError';
 
-WORD: ~["' \t=\r\n]+;
+WORD: ~["' \t=${}\r\n]+;
 
 VARIABLE: '${' WORD '}';
 
-STRING: '"' ~["']* '"'
-      | '\'' ~["']* '\'';
+STRING: '"' ~["']* '"' | '\'' ~["']* '\'';
 
 ENDLINE: SPACE* '\r'? '\n';
 
