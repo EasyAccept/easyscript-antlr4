@@ -12,13 +12,15 @@ command:
 	echo_
 	| quit_
 	| expect_
+	| expect_different_
 	| expect_error_
 	| unknownCommand
 	| assignment;
 
 echo_: ECHO_ SPACE+ data;
 quit_: QUIT_;
-expect_: EXPECT_ SPACE+ data SPACE+ unknownCommand;
+expect_: EXPECT_ SPACE+ data SPACE+ (unknownCommand | echo_);
+expect_different_: EXPECT_DIFFERENT_ SPACE+ data SPACE+ (unknownCommand | echo_);
 expect_error_: EXPECT_ERROR_ SPACE+ data SPACE+ unknownCommand;
 unknownCommand: WORD (SPACE+ argumentList)?;
 assignment: WORD EQUAL unknownCommand;
@@ -36,6 +38,7 @@ EQUAL: '=';
 ECHO_: 'echo';
 QUIT_: 'quit';
 EXPECT_: 'expect';
+EXPECT_DIFFERENT_: 'expectDifferent';
 EXPECT_ERROR_: 'expectError';
 
 WORD: ~["' \t=${}\r\n]+;
