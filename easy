@@ -7,9 +7,20 @@ USER_ID=$(id -u "${USER}")
 GROUP_ID=$(id -g "${USER}")
 
 prepare_docker() {
+    local silently=0
+    if [[ $# -gt 0 ]]; then
+        if [[ "$1" == "-s" || "$1" == "--silent" ]]; then
+            silently=1
+        fi
+    fi
+
     # Build the docker image
     cd "$PROJECT_DIR/docker"
-    docker build -t easyaccept .
+    if [[ $silently -eq 1 ]]; then
+        docker build -t easyaccept . > /dev/null 2>&1
+    else
+        docker build -t easyaccept .
+    fi
     cd "$PROJECT_DIR"
 }
 
@@ -41,6 +52,17 @@ antlr4() {
 antlr4_parse() {
     # Run the 'antlr4-parse' command
     java -cp /usr/local/lib/antlr4-tool.jar:.tmp/grammar/target/ org.antlr.v4.gui.TestRig "$@"
+}
+
+prepare_java_grammar() {
+    # Generate the grammar as Java files
+    antlr4 -Dlanguage=Java .tmp/grammar/EasyScript.g4
+
+    # Compile the grammar
+    JAVA_FILES=$(find "$PROJECT_DIR"/.tmp/grammar -name "*.java" -print0 | tr '\0' ' ')
+    JAVA_FILES=${JAVA_FILES//"$PROJECT_DIR"\//}
+    # shellcheck disable=SC2086
+    javac -cp /usr/local/lib/antlr4-tool.jar -d .tmp/grammar/target $JAVA_FILES
 }
 
 parse_arguments() {
@@ -81,6 +103,12 @@ parse_arguments() {
                 echo
                 echo "Launch the ANTLR4 GUI tool."
                 ;;
+            validate)
+                echo "Usage: ./easy validate <file> [--objective]"
+                echo
+                echo "Validate the file against the grammar. If the file is valid, prints '✓ Input is VALID'. If the file is invalid, prints the error message and '✗ Input is INVALID'."
+                echo "If the --objective option is provided, suppresses the docker output, the valid or invalid messages and only output the error message, if exists."
+                ;;
             *)
                 echo "Usage: ./easy [-h | --help] <command> [<args>]"
                 echo
@@ -88,6 +116,7 @@ parse_arguments() {
                 echo "  generate   Generate the grammar on specified language"
                 echo "  tree       Parse the grammar and print the parse tree"
                 echo "  gui        Launch the ANTLR4 GUI tool"
+                echo "  validate   Validate the file against the grammar"
                 ;;
         esac
 
@@ -178,14 +207,7 @@ parse_arguments() {
         tree)
             prepare_docker
             prepare_grammar
-
-            # Generate the grammar as Java files
-            antlr4 -Dlanguage=Java .tmp/grammar/EasyScript.g4
-
-            # Compile the grammar
-            JAVA_FILES=$(find "$PROJECT_DIR"/.tmp/grammar -name "*.java" -print0 | tr '\0' ' ')
-            JAVA_FILES=${JAVA_FILES//"$PROJECT_DIR"\//}
-            javac -cp /usr/local/lib/antlr4-tool.jar -d .tmp/grammar/target $JAVA_FILES
+            prepare_java_grammar
 
             # Run the 'antlr4-parse' command
             echo "Write your input and press Ctrl+D to finish."
@@ -197,19 +219,75 @@ parse_arguments() {
             prepare_docker
             prepare_grammar
             prepare_gui
-
-            # Generate the grammar as Java files
-            antlr4 -Dlanguage=Java .tmp/grammar/EasyScript.g4
-
-            # Compile the grammar
-            JAVA_FILES=$(find "$PROJECT_DIR"/.tmp/grammar -name "*.java" -print0 | tr '\0' ' ')
-            JAVA_FILES=${JAVA_FILES//"$PROJECT_DIR"\//}
-            javac -cp /usr/local/lib/antlr4-tool.jar -d .tmp/grammar/target $JAVA_FILES
+            prepare_java_grammar
 
             # Run the 'antlr4-parse' command
             echo "Write your input and press Ctrl+D to finish."
             antlr4_parse EasyScript easy -gui
             
+            exit 0
+            ;;
+        validate)
+            if [[ "$#" -lt 1 ]]; then
+                echo "Error: No file provided for 'validate' command."
+                echo "Use -h or --help for usage information."
+                exit 1
+            fi
+
+            local file=$1
+            shift
+
+            if [[ ! -f "$file" ]]; then
+                echo "Error: File '$file' does not exist."
+                echo "Use -h or --help for usage information."
+                exit 1
+            fi
+
+            # Move the file to .tmp/input folder
+            mkdir -p "$PROJECT_DIR/.tmp/input"
+            cp "$file" "$PROJECT_DIR/.tmp/input/"
+
+            local objective_mode=0
+
+            while [[ "$#" -gt 0 ]]; do
+                case $1 in
+                    --objective)
+                        objective_mode=1
+                        shift
+                        ;;
+                    *)
+                        echo "Error: Unknown option '$1' for 'validate' command."
+                        echo "Use -h or --help for usage information."
+                        exit 1
+                        ;;
+                esac
+            done
+
+            if [[ $objective_mode -eq 1 ]]; then
+                prepare_docker --silent
+            else
+                prepare_docker
+            fi
+            prepare_grammar
+            prepare_java_grammar
+
+            # Run the 'antlr4-parse' command
+            # shellcheck disable=SC2046
+            local output
+            output=$(antlr4_parse EasyScript easy ".tmp/input/$(basename "$file")" 2>&1) || true
+            echo "$output"
+
+            # If starts with a "line [0-9]+:[0-9]+ " pattern, it's an error
+            if [[ $output =~ ^line\ [0-9]+:[0-9]+ ]]; then
+                if [[ $objective_mode -eq 0 ]]; then
+                    echo "✗ Input is INVALID"
+                fi
+                exit 1
+            fi
+
+            if [[ $objective_mode -eq 0 ]]; then
+                echo "✓ Input is VALID"
+            fi
             exit 0
             ;;
         *)
