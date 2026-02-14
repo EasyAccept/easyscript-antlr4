@@ -36,12 +36,12 @@ prepare_gui() {
 java() {
     # Run the 'javac' command
     # shellcheck disable=SC2086
-    docker run --rm -it -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY --entrypoint="java" easyaccept "$@"
+    docker run --rm -i -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY --entrypoint="java" easyaccept "$@"
 }
 
 javac() {
     # Run the 'javac' command
-    docker run --rm -it -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" --entrypoint="javac" easyaccept "$@"
+    docker run --rm -i -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" --entrypoint="javac" easyaccept "$@"
 }
 
 antlr4() {
