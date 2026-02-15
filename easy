@@ -34,9 +34,17 @@ prepare_gui() {
 }
 
 java() {
+    local config_display=""
+    if [[ $# -gt 0 ]]; then
+        if [[ "$1" == "--display" ]]; then
+            config_display="-v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY"
+            shift
+        fi
+    fi
+
     # Run the 'javac' command
     # shellcheck disable=SC2086
-    docker run --rm -i -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY --entrypoint="java" easyaccept "$@"
+    docker run --rm -i -u "$USER_ID:$GROUP_ID" -v "$PROJECT_DIR:/work" $config_display --entrypoint="java" easyaccept "$@"
 }
 
 javac() {
@@ -50,8 +58,17 @@ antlr4() {
 }
 
 antlr4_parse() {
+    local set_display=""
+    if [[ $# -gt 0 ]]; then
+        if [[ "$1" == "--display" ]]; then
+            set_display="--display"
+            shift
+        fi
+    fi
+
     # Run the 'antlr4-parse' command
-    java -cp /usr/local/lib/antlr4-tool.jar:.tmp/grammar/target/ org.antlr.v4.gui.TestRig "$@"
+    # shellcheck disable=SC2086
+    java $set_display -cp /usr/local/lib/antlr4-tool.jar:.tmp/grammar/target/ org.antlr.v4.gui.TestRig "$@"
 }
 
 prepare_java_grammar() {
@@ -223,7 +240,7 @@ parse_arguments() {
 
             # Run the 'antlr4-parse' command
             echo "Write your input and press Ctrl+D to finish."
-            antlr4_parse EasyScript easy -gui
+            antlr4_parse --display EasyScript easy -gui
             
             exit 0
             ;;
